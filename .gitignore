@@ -1,0 +1,51 @@
+# Build and bin/obj directories
+bin/
+obj/
+out/
+Debug/
+Release/
+
+# NuGet packages
+*.nupkg
+*.snupkg
+packages/
+!**/packages/build/
+!**/packages/repositories.config
+
+# User-specific and temporary files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vscode/
+.idea/
+*.vs/
+*.vscode/
+
+# Logs and lock files
+*.log
+*.lock.json
+
+# Secrets and credentials (DO NOT COMMIT)
+secrets.json
+.env
+appsettings.Development.json
+
+# Entity Framework Migrations (if using SQLite or local DB)
+Migrations/
+
+# Rider / JetBrains IDE
+.idea/
+*.sln.iml
+
+# Resharper
+_ReSharper.Caches/
+
+# dotnet global tools
+.dotnet_tools/
+
+# MacOS system files
+.DS_Store
+
+# Windows system files
+Thumbs.db
