@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using Expense_Tracker.Services.ServicesContracts;
+using Expense_Tracker.Services.Services;
 
 namespace Expense_Tracker.Controllers
 {
@@ -9,22 +11,35 @@ namespace Expense_Tracker.Controllers
     {
 
         private readonly ApplicationDbContext _context;
+        
 
-        public DashboardController(ApplicationDbContext context)
+        private readonly ILogger<DashboardController> _logger;
+        private readonly IDashboardService _dashboardService;
+
+        public DashboardController(ApplicationDbContext context, ILogger<DashboardController> logger , IDashboardService dashboardService)
         {
             _context = context;
+            _logger = logger;
+            _dashboardService = dashboardService;
         }
-
+        
         public async Task<ActionResult> Index()
         {
             //Last 7 Days
-            DateTime StartDate = DateTime.Today.AddDays(-6);
-            DateTime EndDate = DateTime.Today;
+            // DateTime StartDate = DateTime.Today.AddDays(-6);
+            // DateTime EndDate = DateTime.Today;
 
-            List<Transaction> SelectedTransactions = await _context.Transactions
-                .Include(x => x.Category)
-                .Where(y => y.Date >= StartDate && y.Date <= EndDate)
-                .ToListAsync();
+            // List<Transaction> SelectedTransactions = await _context.Transactions
+            //     .Include(x => x.Category)
+            //     .Where(y => y.Date >= StartDate && y.Date <= EndDate)
+            //     .ToListAsync();
+
+            // List<Transaction> SelectedTransactions = await _context.Transactions
+            // .FromSqlRaw("SELECT * FROM Transactions WHERE Date BETWEEN {0} AND {1}", StartDate, EndDate)
+            // .Include(x => x.Category).ToListAsync();
+
+            List<Transaction> SelectedTransactions = await _dashboardService.GetTransactionsWithCategory();
+            
 
             //Total Income
             int TotalIncome = SelectedTransactions
@@ -44,8 +59,9 @@ namespace Expense_Tracker.Controllers
             culture.NumberFormat.CurrencyNegativePattern = 1;
             ViewBag.Balance = String.Format(culture, "{0:C0}", Balance);
 
+
             //Doughnut Chart - Expense By Category
-            ViewBag.DoughnutChartData = SelectedTransactions
+            var DoughnutChartData = SelectedTransactions
                 .Where(i => i.Category.Type == "Expense")
                 .GroupBy(j => j.Category.CategoryId)
                 .Select(k => new
@@ -56,8 +72,10 @@ namespace Expense_Tracker.Controllers
                 })
                 .OrderByDescending(l => l.amount)
                 .ToList();
-
-            //Spline Chart - Income vs Expense
+            
+            ViewBag.DoughnutChartData = DoughnutChartData;
+           
+            
 
             //Income
             List<SplineChartData> IncomeSummary = SelectedTransactions
@@ -87,16 +105,16 @@ namespace Expense_Tracker.Controllers
                 .ToArray();
 
             ViewBag.SplineChartData = from day in Last7Days
-                                      join income in IncomeSummary on day equals income.day into dayIncomeJoined
-                                      from income in dayIncomeJoined.DefaultIfEmpty()
-                                      join expense in ExpenseSummary on day equals expense.day into expenseJoined
-                                      from expense in expenseJoined.DefaultIfEmpty()
-                                      select new
-                                      {
-                                          day = day,
-                                          income = income == null ? 0 : income.income,
-                                          expense = expense == null ? 0 : expense.expense,
-                                      };
+                join income in IncomeSummary on day equals income.day into dayIncomeJoined
+                from income in dayIncomeJoined.DefaultIfEmpty()
+                join expense in ExpenseSummary on day equals expense.day into expenseJoined
+                from expense in expenseJoined.DefaultIfEmpty()
+                select new
+                {
+                    day = day,
+                    income = income == null ? 0 : income.income,
+                    expense = expense == null ? 0 : expense.expense,
+                };
             //Recent Transactions
             ViewBag.RecentTransactions = await _context.Transactions
                 .Include(i => i.Category)

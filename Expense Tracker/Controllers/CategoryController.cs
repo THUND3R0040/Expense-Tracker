@@ -6,35 +6,41 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Expense_Tracker.Models;
+using Expense_Tracker.Services.ServicesContracts;
 
 namespace Expense_Tracker.Controllers
 {
     public class CategoryController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ICategoryService _categoryService;
 
-        public CategoryController(ApplicationDbContext context)
+        public CategoryController(ICategoryService categoryService)
         {
-            _context = context;
+            _categoryService = categoryService;
         }
 
         // GET: Category
         public async Task<IActionResult> Index()
         {
-            return _context.Categories != null ?
-                        View(await _context.Categories.ToListAsync()) :
-                        Problem("Entity set 'ApplicationDbContext.Categories'  is null.");
+            // return _context.Categories != null ?
+            // View(await _context.Categories.ToListAsync()) :
+            // Problem("Entity set 'ApplicationDbContext.Categories'  is null.");
+            try{
+                return View(await _categoryService.GetCategories());
+            }
+            catch(Exception ex){
+                return Problem("Error: " + ex.Message);
+            }
         }
 
 
         // GET: Category/AddOrEdit
-        public IActionResult AddOrEdit(int id = 0)
+        public async  Task<IActionResult> AddOrEdit(int id = 0)
         {
             if (id == 0)
                 return View(new Category());
             else
-                return View(_context.Categories.Find(id));
-
+                return View(await _categoryService.GetCategory(id));
         }
 
         // POST: Category/AddOrEdit
@@ -47,10 +53,9 @@ namespace Expense_Tracker.Controllers
             if (ModelState.IsValid)
             {
                 if (category.CategoryId == 0)
-                    _context.Add(category);
+                    await _categoryService.AddCategory(category);
                 else
-                    _context.Update(category);
-                await _context.SaveChangesAsync();
+                    await _categoryService.UpdateCategory(category, category.CategoryId);                
                 return RedirectToAction(nameof(Index));
             }
             return View(category);
@@ -62,17 +67,16 @@ namespace Expense_Tracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (_context.Categories == null)
+            if (_categoryService.GetCategories() == null)
             {
                 return Problem("Entity set 'ApplicationDbContext.Categories'  is null.");
             }
-            var category = await _context.Categories.FindAsync(id);
+            var category = _categoryService.GetCategory(id);
             if (category != null)
             {
-                _context.Categories.Remove(category);
+                await _categoryService.DeleteCategory(id);
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
