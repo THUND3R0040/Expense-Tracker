@@ -10,15 +10,14 @@ namespace Expense_Tracker.Controllers
     public class DashboardController : Controller
     {
 
-        private readonly ApplicationDbContext _context;
+        // private readonly ApplicationDbContext _context;
         
 
         private readonly ILogger<DashboardController> _logger;
         private readonly IDashboardService _dashboardService;
 
-        public DashboardController(ApplicationDbContext context, ILogger<DashboardController> logger , IDashboardService dashboardService)
+        public DashboardController(ILogger<DashboardController> logger , IDashboardService dashboardService)
         {
-            _context = context;
             _logger = logger;
             _dashboardService = dashboardService;
         }
@@ -42,66 +41,35 @@ namespace Expense_Tracker.Controllers
             
 
             //Total Income
-            int TotalIncome = SelectedTransactions
-                .Where(i => i.Category.Type == "Income")
-                .Sum(j => j.Amount);
+            int TotalIncome = await _dashboardService.GetTotalIncome(SelectedTransactions);
             ViewBag.TotalIncome = TotalIncome.ToString("C0");
-
             //Total Expense
-            int TotalExpense = SelectedTransactions
-                .Where(i => i.Category.Type == "Expense")
-                .Sum(j => j.Amount);
+            int TotalExpense = await _dashboardService.GetTotalExpense(SelectedTransactions);
             ViewBag.TotalExpense = TotalExpense.ToString("C0");
 
             //Balance
-            int Balance = TotalIncome - TotalExpense;
+            int Balance = await _dashboardService.GetBalance(TotalIncome, TotalExpense);
             CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
             culture.NumberFormat.CurrencyNegativePattern = 1;
             ViewBag.Balance = String.Format(culture, "{0:C0}", Balance);
 
 
             //Doughnut Chart - Expense By Category
-            var DoughnutChartData = SelectedTransactions
-                .Where(i => i.Category.Type == "Expense")
-                .GroupBy(j => j.Category.CategoryId)
-                .Select(k => new
-                {
-                    categoryTitleWithIcon = k.First().Category.Icon + " " + k.First().Category.Title,
-                    amount = k.Sum(j => j.Amount),
-                    formattedAmount = k.Sum(j => j.Amount).ToString("C0"),
-                })
-                .OrderByDescending(l => l.amount)
-                .ToList();
+            List<DoughnutChartDataDto> DoughnutChartData = await _dashboardService.GetDoughnutChartData(SelectedTransactions);
             
             ViewBag.DoughnutChartData = DoughnutChartData;
            
             
 
             //Income
-            List<SplineChartData> IncomeSummary = SelectedTransactions
-                .Where(i => i.Category.Type == "Income")
-                .GroupBy(j => j.Date)
-                .Select(k => new SplineChartData()
-                {
-                    day = k.First().Date.ToString("dd-MMM"),
-                    income = k.Sum(l => l.Amount)
-                })
-                .ToList();
+            List<SplineChartDataDto> IncomeSummary = await _dashboardService.GetIncomeChartData(SelectedTransactions);
 
             //Expense
-            List<SplineChartData> ExpenseSummary = SelectedTransactions
-                .Where(i => i.Category.Type == "Expense")
-                .GroupBy(j => j.Date)
-                .Select(k => new SplineChartData()
-                {
-                    day = k.First().Date.ToString("dd-MMM"),
-                    expense = k.Sum(l => l.Amount)
-                })
-                .ToList();
+            List<SplineChartDataDto> ExpenseSummary = await _dashboardService.GetExpenseChartData(SelectedTransactions);
 
             //Combine Income & Expense
             string[] Last7Days = Enumerable.Range(0, 7)
-                .Select(i => StartDate.AddDays(i).ToString("dd-MMM"))
+                .Select(i => DateTime.Today.AddDays(-6).AddDays(i).ToString("dd-MMM"))
                 .ToArray();
 
             ViewBag.SplineChartData = from day in Last7Days
@@ -116,22 +84,12 @@ namespace Expense_Tracker.Controllers
                     expense = expense == null ? 0 : expense.expense,
                 };
             //Recent Transactions
-            ViewBag.RecentTransactions = await _context.Transactions
-                .Include(i => i.Category)
-                .OrderByDescending(j => j.Date)
-                .Take(5)
-                .ToListAsync();
+            ViewBag.RecentTransactions = await _dashboardService.GetRecentTransactions();
 
 
             return View();
         }
     }
 
-    public class SplineChartData
-    {
-        public string day;
-        public int income;
-        public int expense;
-
-    }
+    
 }
