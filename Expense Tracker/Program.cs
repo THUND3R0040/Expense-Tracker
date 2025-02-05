@@ -1,8 +1,10 @@
 using Expense_Tracker.Models;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Expense_Tracker.Services.Services;
 using Expense_Tracker.Services.ServicesContracts;
 using Expense_Tracker.Repositories;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,10 +23,22 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 
 
+builder.Services.AddIdentity<User, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Auth/Login";
+    options.AccessDeniedPath = "/Auth/AccessDenied";
+});
 
 //Register Syncfusion license
 Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Mgo+DSMBMAY9C3t2VVhhQlFac1pJXGFWfVJpTGpQdk5xdV9DaVZUTWY/P1ZhSXxRdkNjWn9edHNRRmZYWEM=");
 
+
+// Add authorization
+builder.Services.AddAuthorization();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -36,6 +50,9 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

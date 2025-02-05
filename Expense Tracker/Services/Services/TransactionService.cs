@@ -31,9 +31,8 @@ namespace Expense_Tracker.Services.Services
         await _transactionRepository.DeleteAsync(id);
     }
 
-    public async Task<IEnumerable<Transaction>> GetTransactionsWithCategory() {
-        return await _transactionRepository.GetTransactionsWithCategory();
+    public async Task<IEnumerable<Transaction>> GetTransactionsWithCategory(string userId) {
+        return await _transactionRepository.GetTransactionsWithCategory(userId);
     }
-
     }
 }

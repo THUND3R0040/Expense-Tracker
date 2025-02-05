@@ -15,6 +15,8 @@ namespace Expense_Tracker.Controllers
 
         public IActionResult Index()
         {
+            var username = User.Identity.Name ?? "Guest";
+            ViewBag.Username = username;
             return View();
         }
 

@@ -28,22 +28,7 @@
         url = "/Transaction"
     });
 
-    menuItems.Add(new
-    {
-        text = "Extras",
-        separator = true,
-    });
-    menuItems.Add(new
-    {
-        text = "Reports",
-        iconCss = "fa-solid fa-chart-simple",
-        url = "#"
-    }); menuItems.Add(new
-    {
-        text = "Settings",
-        iconCss = "fa-solid fa-gear",
-        url = "#"
-    });
+    
 }
 
 
@@ -60,10 +45,10 @@
         </div>
 
         <div class="profile-wrapper">
-            <img class="profile-pic" src="~/profile.jpg" />
+            <img class="profile-pic" src="~/profile.png" />
             <div class="titles d-flex flex-column ps-3">
                 <h6 class="mb-0">Wallet App</h6>
-                <span class="text-muted">Ashton Cox</span>
+                <span class="text-muted">@ViewBag.Username</span>
             </div>
         </div>
 
@@ -71,8 +56,16 @@
                   items="menuItems"
                   orientation="Vertical"
                   hamburgerMode></ejs-menu>
+
+        <form id="logoutForm" asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
+            <button type="submit" class="btn btn-link text-danger">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </button>
+        </form>
+
     </e-content-template>
 </ejs-sidebar>
+
 
 <script>
     document.addEventListener('DOMContentLoaded',function (){
