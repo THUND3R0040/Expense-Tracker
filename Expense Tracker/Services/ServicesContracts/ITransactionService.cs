@@ -10,6 +10,6 @@ namespace Expense_Tracker.Services.ServicesContracts
         Task UpdateTransaction(Transaction transaction , object key);
         Task DeleteTransaction(int id);
 
-        Task <IEnumerable<Transaction>> GetTransactionsWithCategory();
+        Task <IEnumerable<Transaction>> GetTransactionsWithCategory(string userId);
     }
 }

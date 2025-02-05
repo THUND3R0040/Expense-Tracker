@@ -1,17 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using Expense_Tracker.Models;
+using System.Security.Claims;
 
 namespace Expense_Tracker.Repositories{
     public interface IDashboardRepository : IGenericRepository<Category>
     {
-        Task<List<Transaction>> GetTransactionsWithCategory();
+        Task<List<Transaction>> GetTransactionsWithCategory(ClaimsPrincipal user);
         Task<int> GetTotalIncome(List<Transaction> selectedTransactions);
         Task<int> GetTotalExpense(List<Transaction> selectedTransactions);
         Task<int> GetBalance(int totalIncome, int totalExpense);
         Task<List<DoughnutChartDataDto>> GetDoughnutChartData(List<Transaction> selectedTransactions);
         Task<List<SplineChartDataDto>> GetIncomeChartData(List<Transaction> selectedTransactions);
         Task<List<SplineChartDataDto>> GetExpenseChartData(List<Transaction> selectedTransactions);
-        Task<List<Transaction>> GetRecentTransactions();
+        Task<List<Transaction>> GetRecentTransactions(string userId);
     }
 
     public class DashboardRepository : GenericRepository<Category>, IDashboardRepository
@@ -22,12 +23,14 @@ namespace Expense_Tracker.Repositories{
         {
             _context = context;
         }
-        public async Task<List<Transaction>> GetTransactionsWithCategory()
+        public async Task<List<Transaction>> GetTransactionsWithCategory(ClaimsPrincipal user)
         {
             DateTime StartDate = DateTime.Today.AddDays(-6);
             DateTime EndDate = DateTime.Today;
+            string userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            Console.WriteLine("User ID: " + userId);
             List<Transaction> SelectedTransactions = await _context.Transactions
-            .FromSqlRaw("SELECT * FROM Transactions WHERE Date BETWEEN {0} AND {1}", StartDate, EndDate)
+            .FromSqlRaw("SELECT * FROM Transactions WHERE Date BETWEEN {0} AND {1} and UserId={2}", StartDate, EndDate, userId)
             .Include(x => x.Category).ToListAsync();
             return SelectedTransactions;
         }
@@ -96,10 +99,11 @@ namespace Expense_Tracker.Repositories{
             return ExpenseSummary;
         }
 
-        public async Task<List<Transaction>> GetRecentTransactions()
+        public async Task<List<Transaction>> GetRecentTransactions(string userId)
         {
             List<Transaction> RecentTransactions = await _context.Transactions
             .Include(x => x.Category)
+            .Where (t=>t.UserId == userId)
             .OrderByDescending(y => y.Date)
             .Take(5)
             .ToListAsync();

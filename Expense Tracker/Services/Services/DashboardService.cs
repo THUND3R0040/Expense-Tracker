@@ -1,6 +1,7 @@
 using Expense_Tracker.Models;
 using Expense_Tracker.Services.ServicesContracts;
 using Expense_Tracker.Repositories;
+using System.Security.Claims;
 
 namespace Expense_Tracker.Services.Services
 {
@@ -10,8 +11,8 @@ namespace Expense_Tracker.Services.Services
         _dashboardRepository = dashboardRepository;
     }
 
-    public async Task<List<Transaction>> GetTransactionsWithCategory(){
-        return await _dashboardRepository.GetTransactionsWithCategory();
+    public async Task<List<Transaction>> GetTransactionsWithCategory(ClaimsPrincipal user){
+        return await _dashboardRepository.GetTransactionsWithCategory(user);
     }
 
     public async Task<int> GetTotalIncome(List<Transaction> selectedTransactions){
@@ -38,8 +39,8 @@ namespace Expense_Tracker.Services.Services
         return await _dashboardRepository.GetExpenseChartData(selectedTransactions);
     }
 
-    public async Task<List<Transaction>> GetRecentTransactions(){
-        return await _dashboardRepository.GetRecentTransactions();
+    public async Task<List<Transaction>> GetRecentTransactions(string userId){
+        return await _dashboardRepository.GetRecentTransactions(userId);
     }
 
 

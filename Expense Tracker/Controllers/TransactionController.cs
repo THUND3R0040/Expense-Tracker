@@ -1,32 +1,45 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Expense_Tracker.Models;
 using Expense_Tracker.Services.ServicesContracts;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+
 
 namespace Expense_Tracker.Controllers
+
 {
+
+
+
+    [Authorize]
     public class TransactionController : Controller
     {
         private readonly ITransactionService _transactionService;
         private readonly ICategoryService _categoryService;
 
-        public TransactionController(ITransactionService transactionService, ICategoryService categoryService)
+
+        public TransactionController(ITransactionService transactionService, ICategoryService categoryService , ILogger<TransactionController> logger)
         {
             _transactionService = transactionService;
             _categoryService = categoryService;
+            
         }
         
 
         // GET: Transaction
         public async Task<IActionResult> Index()
         {
-            return View(await _transactionService.GetTransactionsWithCategory());
+            var username = User.Identity.Name ?? "Guest";
+            ViewBag.Username = username;
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return View(await _transactionService.GetTransactionsWithCategory(userId));
         }
 
         // GET: Transaction/AddOrEdit
         public async Task<IActionResult> AddOrEdit(int id = 0)
         {
+            var username = User.Identity.Name ?? "Guest";
+            ViewBag.Username = username;
             await PopulateCategories();
             if (id == 0)
                 return View(new Transaction());
@@ -35,18 +48,24 @@ namespace Expense_Tracker.Controllers
         }
 
         // POST: Transaction/AddOrEdit
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddOrEdit([Bind("TransactionId,CategoryId,Amount,Note,Date")] Transaction transaction)
+        public async Task<IActionResult> AddOrEdit(Transaction transaction)
         {
+            var username = User.Identity.Name ?? "Guest";
+            ViewBag.Username = username;
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                transaction.UserId = userId;
+                Console.WriteLine("User ID: " + userId);
             if (ModelState.IsValid)
             {
-                if (transaction.TransactionId == 0)
+                
+                if (transaction.TransactionId == 0){
                     await _transactionService.AddTransaction(transaction);
-                else
+                }
+                else{
                     await _transactionService.UpdateTransaction(transaction, transaction.TransactionId);
+                }
                 return RedirectToAction(nameof(Index));
             }
             await PopulateCategories();
@@ -58,6 +77,8 @@ namespace Expense_Tracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            var username = User.Identity.Name ?? "Guest";
+            ViewBag.Username = username;
             if (_transactionService.GetTransactions() == null)
             {
                 return Problem("Entity set 'ApplicationDbContext.Transactions'  is null.");

@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Expense_Tracker.Models;
 
 namespace Expense_Tracker.Repositories{

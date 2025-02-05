@@ -1,17 +1,16 @@
 ﻿using Expense_Tracker.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using Expense_Tracker.Services.ServicesContracts;
-using Expense_Tracker.Services.Services;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+
 
 namespace Expense_Tracker.Controllers
 {
+    [Authorize]
     public class DashboardController : Controller
     {
-
-        // private readonly ApplicationDbContext _context;
-        
 
         private readonly ILogger<DashboardController> _logger;
         private readonly IDashboardService _dashboardService;
@@ -24,20 +23,10 @@ namespace Expense_Tracker.Controllers
         
         public async Task<ActionResult> Index()
         {
-            //Last 7 Days
-            // DateTime StartDate = DateTime.Today.AddDays(-6);
-            // DateTime EndDate = DateTime.Today;
-
-            // List<Transaction> SelectedTransactions = await _context.Transactions
-            //     .Include(x => x.Category)
-            //     .Where(y => y.Date >= StartDate && y.Date <= EndDate)
-            //     .ToListAsync();
-
-            // List<Transaction> SelectedTransactions = await _context.Transactions
-            // .FromSqlRaw("SELECT * FROM Transactions WHERE Date BETWEEN {0} AND {1}", StartDate, EndDate)
-            // .Include(x => x.Category).ToListAsync();
-
-            List<Transaction> SelectedTransactions = await _dashboardService.GetTransactionsWithCategory();
+            var username = User.Identity.Name ?? "Guest";
+            ViewBag.Username = username;
+            ClaimsPrincipal user = this.User;
+            List<Transaction> SelectedTransactions = await _dashboardService.GetTransactionsWithCategory(user);
             
 
             //Total Income
@@ -84,7 +73,8 @@ namespace Expense_Tracker.Controllers
                     expense = expense == null ? 0 : expense.expense,
                 };
             //Recent Transactions
-            ViewBag.RecentTransactions = await _dashboardService.GetRecentTransactions();
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            ViewBag.RecentTransactions = await _dashboardService.GetRecentTransactions(userId);
 
 
             return View();

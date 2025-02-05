@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
 using Expense_Tracker.Models;
 using Expense_Tracker.Services.ServicesContracts;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Expense_Tracker.Controllers
 {
+    [Authorize]
     public class CategoryController : Controller
     {
         private readonly ICategoryService _categoryService;
@@ -22,9 +18,9 @@ namespace Expense_Tracker.Controllers
         // GET: Category
         public async Task<IActionResult> Index()
         {
-            // return _context.Categories != null ?
-            // View(await _context.Categories.ToListAsync()) :
-            // Problem("Entity set 'ApplicationDbContext.Categories'  is null.");
+
+            var username = User.Identity.Name ?? "Guest";
+            ViewBag.Username = username;
             try{
                 return View(await _categoryService.GetCategories());
             }
@@ -37,6 +33,8 @@ namespace Expense_Tracker.Controllers
         // GET: Category/AddOrEdit
         public async  Task<IActionResult> AddOrEdit(int id = 0)
         {
+            var username = User.Identity.Name ?? "Guest";
+            ViewBag.Username = username;
             if (id == 0)
                 return View(new Category());
             else
@@ -50,6 +48,8 @@ namespace Expense_Tracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddOrEdit([Bind("CategoryId,Title,Icon,Type")] Category category)
         {
+            var username = User.Identity.Name ?? "Guest";
+            ViewBag.Username = username;
             if (ModelState.IsValid)
             {
                 if (category.CategoryId == 0)
@@ -67,6 +67,8 @@ namespace Expense_Tracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            var username = User.Identity.Name ?? "Guest";
+            ViewBag.Username = username;
             if (_categoryService.GetCategories() == null)
             {
                 return Problem("Entity set 'ApplicationDbContext.Categories'  is null.");

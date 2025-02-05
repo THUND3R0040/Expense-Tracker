@@ -38,5 +38,9 @@ namespace Expense_Tracker.Models
             }
         }
 
+        public string UserId { get; set; }
+        public User? User { get; set; }
+
+
     }
 }
